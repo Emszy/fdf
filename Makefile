@@ -5,8 +5,8 @@ MINILIB_X = minilibx_macos/libmlx.a
 
 SRCS = \
 		main.c \
-		fdf_misc.c \
-		fdf_parsefile.c
+		fdf_parsefile.c \
+		translate_center.c
 
 all:
 	gcc $(FLAGS) $(SRCS) $(MINILIB_X) $(LIBFT) $(FRAMEWORKS)

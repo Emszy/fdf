@@ -1,229 +1,325 @@
 #include "fdf.h"
 
-#define sign(x) ((x>0)?1:((x<0)?-1:0))
-
-void bres_general(int x1, int y1, int x2, int y2, t_connection *connection)
+void error_master5000(char *message)
 {
-  int dx; 
-  int dy; 
-  int x; 
-  int y; 
-  int d; 
-  int s1; 
-  int s2;
-  int swap;
-  int temp;
-  int i;
-  swap = 0;
-
-  dx = abs(x2 - x1);
-  dy = abs(y2 - y1);
-  s1 = sign(x2 - x1);
-  s2 = sign(y2 - y1);
-
-  /* Check if dx or dy has a greater range */
-  /* if dy has a greater range than dx swap dx and dy */
-  if(dy > dx)
-  {
-  	temp = dx;
-  	dx = dy;
-  	dy = temp;
-  	swap = 1;
-  }
-
-  /* Set the initial decision parameter and the initial point */
-  d = 2 * dy - dx;
-  x = x1;
-  y = y1;
-
-  i = 0;
-  while (++i <= dx)
-  {
-    mlx_pixel_put(connection->mlx, connection->win, y, x, GREEN);
-    while(d >= 0) 
-    {
-      if(swap) x = x + s1;
-      else 
-      {
-        y = y + s2;
-        d = d - 2 * dx;
-      }
-    }
-    if (swap)
-    	y = y + s2;
-    else
-    	x = x + s1;
-    d = d + 2 * dy;
-  }
+	ft_putstr(message);
+	ft_putstr("\n");
+	exit(-1);
 }
 
-
- void rotate_x(t_coordinate *coordinate, int y, int z, t_move_grid *grid)
- {
- 	float cosa;
- 	float sina;
-
- 	printf("%f\n", grid->x_radians);
- 	
-        cosa = cos(grid->x_radians);
-        sina = sin(grid->x_radians);
-        coordinate->temp_y = y * cosa - z * sina;
-        coordinate->temp_z = y * sina + z * cosa;
- }
-
-void rotate_y(t_coordinate *coordinate, t_move_grid *grid)
+void display_map(t_connection *obj)
 {
- 	float cosa;
- 	float sina;
+	int x;
 
- 	printf("%f\n", grid->y_radians);
- 
-        cosa = cos(grid->y_radians);
-        sina = sin(grid->y_radians);
-	coordinate->temp_z = coordinate->temp_z * cosa - coordinate->temp_x * sina;
-	coordinate->temp_x = coordinate->temp_z * sina + coordinate->temp_x * cosa;
- }
-       
-void rotate_z(t_coordinate *coordinate, t_move_grid *grid)
-{
- 	float cosa;
- 	float sina;
-
- 		
-        cosa = cos(grid->z_radians);
-        sina = sin(grid->z_radians);
-        coordinate->temp_x = coordinate->temp_x * cosa + coordinate->temp_y * sina;
-        coordinate->temp_y = coordinate->temp_x * sina + coordinate->temp_y * cosa;
-
-    }
-        
- 
-    void project(t_coordinate *coordinate, t_connection *connection, t_map *map)
-    {
-    	float factor;
-
-  		factor = 400 / (40 - coordinate->temp_z);
-        coordinate->temp_x = coordinate->temp_x * factor + ((SCREEN_WIDTH / 2) - (map->col_count));
-        coordinate->temp_y = coordinate->temp_y * factor + ((SCREEN_HEIGHT / 2) - (map->row_count));
-        mlx_pixel_put(connection->mlx, connection->win, coordinate->temp_y, coordinate->temp_x, GREEN);
-    }
-
-    void rotate_all(t_map *map, t_coordinate *coordinate, t_move_grid *grid, t_connection *connection)
-    {
-    	int x; 
-    	int y;
-    	int z;
-    	
-    	z = -1;
-    	x = -1;
-    	y = -1;
-    while (++y < map->col_count)
+	x = 0;
+	while(x < obj->map.total_area)
 	{
-		x = -1;
-		while (++x < map->row_count)
-		{	
-			z = coordinate->points[x][y];
-			coordinate->temp_x = x;
-				rotate_x(coordinate, y, z, grid);
-				rotate_y(coordinate, grid);
-				rotate_z(coordinate, grid);
-				project(coordinate, connection, map);
-
-		}
-	
+		mlx_pixel_put(obj->mlx, obj->win, obj->map.pts[x].camera.x, obj->map.pts[x].camera.y, GREEN);
+		x++;
 	}
 }
- 
-        
 
-int my_funct(int keycode, t_all *all)
+void translate_points(t_connection *obj, int dir_x, int dir_y)
+{
+	int x;
+
+	x = 0;
+	while(x < obj->map.total_area)
+	{
+		obj->map.pts[x].camera.y = (((SCREEN_HEIGHT / 2) - obj->map.pts[x].camera.y) + dir_y) + (SCREEN_HEIGHT / 2);
+		obj->map.pts[x].camera.x = (((SCREEN_WIDTH / 2) - obj->map.pts[x].camera.x) + dir_x) + (SCREEN_WIDTH / 2);
+		x++;
+	}
+}
+
+void zoom_in(t_connection *obj)
+{
+	int x;
+
+	x = 0;
+	while(x < obj->map.total_area)
+	{
+		obj->map.pts[x].world.y = obj->map.pts[x].world.y * 1.1;
+		obj->map.pts[x].world.x = obj->map.pts[x].world.x * 1.1;
+		x++;
+	}
+}
+
+void zoom_out(t_connection *obj)
+{
+	int x;
+
+	x = 0;
+	while(x < obj->map.total_area)
+	{
+		obj->map.pts[x].world.y = obj->map.pts[x].world.y * 0.9;
+		obj->map.pts[x].world.x = obj->map.pts[x].world.x * 0.9;
+		x++;
+	}
+}
+
+void rotate_x(t_connection *obj, int cy, int cz, float radians)
+ {
+ 	int x;
+
+ 	x = 0;
+ 
+ 	while(x < obj->map.total_area)
+	{
+		obj->map.rot.y     			= obj->map.pts[x].world.y - cy;
+        obj->map.rot.z      		= obj->map.pts[x].world.z - cz;
+        obj->map.rot.distance      	= hypot(obj->map.rot.y, obj->map.rot.z);
+        obj->map.rot.theta  		= atan2(obj->map.rot.y, obj->map.rot.z) + radians;
+        obj->map.pts[x].world.z 	= cz + obj->map.rot.distance * cos(obj->map.rot.theta);
+       	obj->map.pts[x].world.y 	= cy + obj->map.rot.distance * sin(obj->map.rot.theta);
+		x++;
+	}  
+ }
+
+
+
+ void rotate_y(t_connection *obj, int cx, int cz, float radians)
+ {
+ 	int x;
+
+ 	x = 0;
+ 
+ 	while(x < obj->map.total_area)
+	{
+		obj->map.rot.x     	= obj->map.pts[x].world.x - cx;
+        obj->map.rot.z      = obj->map.pts[x].world.z - cz;
+        obj->map.rot.distance      = hypot(obj->map.rot.x, obj->map.rot.z);
+        obj->map.rot.theta  = atan2(obj->map.rot.x, obj->map.rot.z) + radians;
+        obj->map.pts[x].world.z = cz + obj->map.rot.distance * cos(obj->map.rot.theta);
+       	obj->map.pts[x].world.x = cx + obj->map.rot.distance * sin(obj->map.rot.theta);
+
+		x++;
+	}
+ }
+
+void rotate_z(t_connection *obj, int cx, int cy, float radians)
+ {
+ 	int x;
+
+ 	x = 0;
+
+ 	while(x < obj->map.total_area)
+	{
+		obj->map.rot.x     	= obj->map.pts[x].world.x - cx;
+        obj->map.rot.y      = obj->map.pts[x].world.y - cy;
+        obj->map.rot.distance      = hypot(obj->map.rot.x, obj->map.rot.y);
+        obj->map.rot.theta  = atan2(obj->map.rot.x, obj->map.rot.y) + radians;
+        obj->map.pts[x].world.y = cy + obj->map.rot.distance * cos(obj->map.rot.theta);
+       	obj->map.pts[x].world.x = cx + obj->map.rot.distance * sin(obj->map.rot.theta);
+
+		x++;
+	}
+ }
+
+#define sign(x) ((x>0)?1:((x<0)?-1:0))
+
+void draw_line(int x1, int y1, int x2, int y2, t_connection *obj)
 {
 
+	int x;
+	int y;
+	int dx;
+	int dy;
+	int swap;
+	int temp;
+	int s1;
+	int s2;
+	int p;
+	int i;
 
+	x = x1;
+	y = y1;
+	dx = abs(x2-x1);
+	dy = abs(y2-y1);
+	s1 = sign(x2-x1);
+	s2 = sign(y2-y1);
+	swap = 0;
+	i = -1;
+
+
+	mlx_pixel_put(obj->mlx, obj->win, x, y, GREEN);
+	if(dy>dx)
+ 	{
+ 		temp=dx;
+ 		dx=dy;
+ 		dy=temp;
+ 		swap=1;
+ 	}
+	p=2*dy-dx;
+
+	while(++i < dx)
+ 	{
+ 		mlx_pixel_put(obj->mlx, obj->win, x, y, GREEN);
+ 		while(p>=0)
+  		{
+  			p=p-2*dx;
+  			if(swap)
+   				x+=s1;
+  			else
+   				y+=s2;
+  		}
+ 	p = p + 2 * dy;
+ 	if (swap)
+  		y+=s2;
+ 	else
+  		x+=s1;
+ }
+	mlx_pixel_put(obj->mlx, obj->win, x, y, GREEN);
+}
+
+
+
+
+
+void connect_x_pts(t_connection *obj)
+{
+	int x;
+	int y;
+	int count;
+
+	count = 0;
+ 	x = -1;
+ 	y = 0;
+
+while(y <= obj->map.map_height)
+{
+	while(x < obj->map.map_width * count - 1)
+	{
+			draw_line(obj->map.pts[x].camera.x, obj->map.pts[x].camera.y, obj->map.pts[x + 1].camera.x, obj->map.pts[x + 1].camera.y, obj);
+		x++;
+	}
+	x++;
+	y++;
+	count++;
+}
+}
+
+void connect_y_pts(t_connection *obj)
+{
+	int x;
+	int y;
+	int c;
+	int count;
+	c = 0;
+	count = 0;
+ 	x = -1;
+ 	y = 0;
+
+	while(x < obj->map.map_width)
+	{
+		while(y < obj->map.map_height * count)
+		{
+				draw_line(obj->map.pts[c].camera.x, obj->map.pts[c].camera.y, obj->map.pts[c + obj->map.map_width].camera.x, obj->map.pts[c + obj->map.map_width].camera.y, obj);
+			y++;
+			c++;
+		}
+	x++;
+	y++;
+	count++;
+	}
+}
+void setup_line(t_connection *obj)
+{
+	connect_x_pts(obj);
+	connect_y_pts(obj);
+}
+
+int my_funct(int keycode, t_connection *obj)
+{
 	
 	if (keycode == 53)
 		error_master5000("GOODBYE WORLD!");
-	if (keycode == 8)
-		  mlx_clear_window(all->connection->mlx, all->connection->win);
-		if (keycode == 0)
-		{
-		  mlx_clear_window(all->connection->mlx, all->connection->win);
-		  all->move_grid->x_radians += 0.1;
-		  rotate_all(all->map, all->coordinate, all->move_grid, all->connection);
-	
-		}
 		if (keycode == 1)
 		{
-		  mlx_clear_window(all->connection->mlx, all->connection->win);
-		  all->move_grid->x_radians -= 0.1;
-		  rotate_all(all->map, all->coordinate, all->move_grid, all->connection);
-
+		  mlx_clear_window(obj->mlx, obj->win);
+		  rotate_x(obj, find_center_y(obj), find_center_z(obj), 0.1);
+		  translate_camera(obj);
+		  display_map(obj);
 		}
-
+		if (keycode == 13)
+		{
+		  mlx_clear_window(obj->mlx, obj->win);
+		  rotate_x(obj, find_center_y(obj), find_center_z(obj), -0.1);
+		  translate_camera(obj);
+		  display_map(obj);
+		
+		}
 		if (keycode == 2)
 		{
-		  mlx_clear_window(all->connection->mlx, all->connection->win);
-		  all->move_grid->y_radians += 0.1;
-		  rotate_all(all->map, all->coordinate, all->move_grid, all->connection);
-	
+		  mlx_clear_window(obj->mlx, obj->win);
+		  rotate_y(obj, find_center_x(obj), find_center_z(obj), 0.1);
+		  translate_camera(obj);
+		  display_map(obj);
 		}
-		if (keycode == 3)
-		{
-		  mlx_clear_window(all->connection->mlx, all->connection->win);
-		  all->move_grid->y_radians -= 0.1;
-		  rotate_all(all->map, all->coordinate, all->move_grid, all->connection);
 
-		}
-		if (keycode == 4)
+		if (keycode == 0)
 		{
-		  mlx_clear_window(all->connection->mlx, all->connection->win);
-		  all->move_grid->z_radians += 0.1;
-		  rotate_all(all->map, all->coordinate, all->move_grid, all->connection);
-	
+		  mlx_clear_window(obj->mlx, obj->win);
+		  rotate_y(obj, find_center_x(obj), find_center_z(obj), -0.1);
+		  translate_camera(obj);
+		  display_map(obj);
+		
+		}
+		if (keycode == 6)
+		{
+				mlx_clear_window(obj->mlx, obj->win);
+		 		zoom_in(obj);
+		 	 	translate_camera(obj);
+		 	 	display_map(obj);
+		}
+		if (keycode == 7)
+		{
+				mlx_clear_window(obj->mlx, obj->win);
+		 		zoom_out(obj);
+		 	 	translate_camera(obj);
+		 	 	display_map(obj);
+		}
+		if (keycode == 12)
+		{
+		  mlx_clear_window(obj->mlx, obj->win);
+		  rotate_z(obj, find_center_x(obj), find_center_y(obj), 0.1);
+		  translate_camera(obj);
+		  display_map(obj);
+		 
+		}
+		if (keycode == 14)
+		{
+		  	mlx_clear_window(obj->mlx, obj->win);
+		  rotate_z(obj, find_center_x(obj), find_center_y(obj), -0.1);
+		  translate_camera(obj);
+		  display_map(obj);
 		}
 		if (keycode == 5)
 		{
-		  mlx_clear_window(all->connection->mlx, all->connection->win);
-		  all->move_grid->z_radians -= 0.1;
-		  rotate_all(all->map, all->coordinate, all->move_grid, all->connection);
-
+		  mlx_clear_window(obj->mlx, obj->win);
 		}
+	setup_line(obj);
 	printf("%d\n", keycode);
 	return(0);
 }
 
-void mlx_connections(t_all *all)
-{
-	all->connection->mlx = mlx_init();
-	all->connection->win = mlx_new_window(all->connection->mlx, SCREEN_WIDTH, SCREEN_HEIGHT, "EXAMPLE");
- 	mlx_key_hook(all->connection->win, my_funct, all);
-	mlx_loop(all->connection->mlx);
-}
-
-
 int main(int ac, char **av)
 {
-	t_all *all;
-
-	all = malloc(sizeof(t_all));
-	malloc_a_skeleton(all);
-	if(ac == 2 && av[1])
+	t_connection *obj;
+	obj = malloc(sizeof(t_connection));
+	obj->mlx = mlx_init();
+	obj->win = mlx_new_window(obj->mlx, SCREEN_WIDTH, SCREEN_HEIGHT, "MZ$2");
+	if (ac == 2)
 	{
-		all->move_grid->x_radians = 0.0;
-		all->move_grid->y_radians = 0.0;
-		all->move_grid->z_radians = 0.0;
-		all->move_grid->zoom = 10;
-		all->move_grid->fov = 5;
-
-		get_file_length(av, all->map);
-		read_file(av, all->map,  all->coordinate);
-		print_coordinates(all);
-		mlx_connections(all);
+		read_file(av[1], obj);
+		translate_center(obj ,find_center_x(obj), find_center_y(obj), find_center_z(obj));
+		zoom_in(obj);
+		translate_camera(obj);
+		setup_line(obj);
 	}
-	else
-		error_master5000("Uhmm.. You need a file");
+	mlx_key_hook(obj->win, my_funct, obj);
+	mlx_loop(obj->mlx);
 
 	
-
 	return 0;
 }

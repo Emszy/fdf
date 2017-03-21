@@ -9,74 +9,93 @@
 
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 1000
-#define X_SCALE 30
-#define Y_SCALE 30
+#define X_SCALE 100
+#define Y_SCALE 100
 
 #define RED 	0x00FF0000
 #define GREEN 	0x0000FF00
 #define BLUE 	0x000000FF
 
-typedef struct s_coordinate
+
+
+typedef struct s_pts
 {
-	int **points;
-	int temp_x;
-	int temp_y;
-	int temp_z;
-	int z_len;
-	struct s_coordinate *next;
-}				t_coordinate;
+	float x;
+	float y;
+	float z;
+}				t_pts;
+
+typedef struct s_store
+{
+	t_pts		local;
+	t_pts		world;
+	t_pts		camera;
+	t_pts		view;
+}				t_store;
+
+typedef struct s_rotation
+{
+	float x;
+	float y;
+	float z;
+	float theta;
+	float distance;
+}				t_rotation;
+
+typedef struct	s_line_var
+{
+	int x1;
+	int y1;
+	int x2;
+	int y2;
+	int x;
+	int y;
+	int dx;
+	int dy;
+	int swap;
+	int temp;
+	int s1;
+	int s2;
+	int p;
+	
+}				t_line_var;
 
 typedef struct s_map
 {
-	int row_count;
-	int col_count;
-	int z_len;
-	int area;
-	int start_point_x;
-	int start_point_y;
-	int x_sum;
-	int y_sum;
+	int 				map_width;
+	int 				map_height;
+	int 				total_area;
+	int					zoom;
 
+	t_store				*pts;
+	t_line_var			line_var;
+	t_rotation			rot;
 }				t_map;
+
+
+
 typedef struct	s_connection
 {
-	void *mlx;
-	void *win;
-	void *img;
+	void			*mlx;
+	void			*win;
+	void			*img;
+	t_map			map;
 }				t_connection;
 
-typedef struct	s_move_grid
-{
 
-	double zoom;
-	double transform_x;
-	double transform_y;
-	double slope;
-	double x_radians;
-	double y_radians;
-	double z_radians;
-	double radian_z;
-	double fov;
 
-}				t_move_grid;
+int add_pts(char **split_line, int line_count, t_connection *obj, int index);
+int check_valid_file(char *filename, t_connection *obj);
+void print_map(t_connection *obj);
+int read_file(char *filename, t_connection *obj);
+int find_center_x(t_connection *obj);
+int find_center_y(t_connection *obj);
+int find_center_z(t_connection *obj);
+int translate_center(t_connection *obj, float mean_x, float mean_y, float mean_z);
+int translate_camera(t_connection *obj);
 
-typedef struct s_all
-{
-	t_coordinate *coordinate;
-	t_map *map;
-	t_connection *connection;
-	t_move_grid *move_grid;
-}				t_all;
 
-void error_master5000(char *message);
-int my_funct(int keycode, t_all *all);
-void print_coordinates(t_all *all);
-void add_to_2darr(char **split_line, t_coordinate *coordinate, t_map *map, int y_count);
-int read_file(char **av, t_map *map, t_coordinate *coordinate);
-int count_x(char **split_line);
-int get_file_length(char **av, t_map *map);
-void mlx_connections(t_all *all);
-void malloc_a_skeleton(t_all *all);
+
 
 #endif
 

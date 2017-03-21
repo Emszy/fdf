@@ -1,73 +1,89 @@
 #include "fdf.h"
 
-void add_to_2darr(char **split_line, t_coordinate *coordinate, t_map *map, int y_count)
+int add_pts(char **split_line, int line_count, t_connection *obj, int index)
 {
-	int i;
-	 
-	i = -1;
-	coordinate->points[y_count] = malloc(sizeof(int *) * (map->col_count));
-	while(++i < map->col_count)
+	int x;
+	x = 0;
+
+	while (split_line[x] != '\0')
 	{
-		coordinate->points[y_count][i] = ft_atoi(split_line[i]);
-		if (coordinate->points[y_count][i] > coordinate->z_len)
-			coordinate->z_len = coordinate->points[y_count][i];
+		obj->map.pts[index].local.x = x;
+		obj->map.pts[index].local.y = line_count;
+		obj->map.pts[index].local.z = ft_atoi(split_line[x]) * 3;
+		index++;
+		x++;
 	}
+
+	return (index);
 }
 
-int read_file(char **av, t_map *map, t_coordinate *coordinate)
-{	char *line;
-	char **split_line;
-	int fd;
-	int x;
-	int y;
 
+int check_valid_file(char *filename, t_connection *obj)
+{
+	int x;
+	int fd;
+	int line_count;
+	char *line;
+	char **split_line;
+
+	line_count = 0;
 	x = 0;
-	y = 0;
-	fd = open(av[1], O_RDONLY);
-	coordinate->points = (int **)malloc(sizeof(int **) * map->row_count + 2);
+	fd = open(filename, O_RDONLY);
 	while(get_next_line(fd, &line) == 1)
 	{
 		split_line = ft_strsplit(line, ' ');
-		add_to_2darr(split_line, coordinate, map, y);
-		y++;
+		x = 0;
+		while(split_line[x])
+			x++;
+		obj->map.map_width = x;
+		line_count++;
 	}
+	obj->map.map_height = line_count;
 
 	return (1);
 }
-int count_x(char **split_line)
+
+void print_map(t_connection *obj)
 {
 	int x;
 
 	x = 0;
-	while(split_line[x])
+	while(x < obj->map.total_area)
+	{
+		printf("x:%f\n", obj->map.pts[x].local.x);
+		printf("y:%f\n", obj->map.pts[x].local.y);
+		printf("z:%f\n", obj->map.pts[x].local.z);
 		x++;
-	return (x);
+	}
 }
 
-int get_file_length(char **av, t_map *map)
+int read_file(char *filename, t_connection *obj)
 {
 	int fd;
+	int line_count;
 	char *line;
 	char **split_line;
-	int y_count;
-	int x_count;
+	int x;
+	int index;
 
-	y_count = 0;
-	x_count = 0;
+	index = 0;
+	x = 0;
+	line_count = 0;
 
-	fd = open(av[1], O_RDONLY);
-	while (get_next_line(fd, &line) == 1)
+	check_valid_file(filename, obj);
+	obj->map.total_area = obj->map.map_height * obj->map.map_width;
+	obj->map.pts = (t_store*)malloc(sizeof(t_store) * obj->map.total_area);
+	
+
+	fd = open(filename, O_RDONLY);
+	while(get_next_line(fd, &line) == 1)
 	{
 		split_line = ft_strsplit(line, ' ');
-		if (!x_count)
-			x_count = count_x(split_line);
-		if (count_x(split_line) != x_count)
-			error_master5000("ITS NOT A RECTANGLE BRO!");
-		y_count++;
+		index = add_pts(split_line, line_count, obj, index);
+		line_count++;
 	}
-	map->row_count = y_count;
-	map->col_count = x_count;
-	map->area = y_count * x_count;
-	close(fd);
-	return(1);
+
+	x = 0;
+	return (1);
+
 }
