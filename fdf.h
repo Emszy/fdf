@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _FDF_
-# define _FDF_
+#ifndef FDF_H
+# define FDF_H
 
 # include "libft/libft.h"
 # include "minilibx_macos/mlx.h"
