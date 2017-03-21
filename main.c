@@ -34,28 +34,16 @@ void translate_points(t_connection *obj, int dir_x, int dir_y)
 
 void zoom_in(t_connection *obj)
 {
-	int x;
-
-	x = 0;
-	while(x < obj->map.total_area)
-	{
-		obj->map.pts[x].world.y = obj->map.pts[x].world.y * 1.1;
-		obj->map.pts[x].world.x = obj->map.pts[x].world.x * 1.1;
-		x++;
-	}
+	
+	obj->map.zoom++;
+	translate_center(obj ,find_center_x(obj), find_center_y(obj), find_center_z(obj));
 }
 
 void zoom_out(t_connection *obj)
 {
-	int x;
-
-	x = 0;
-	while(x < obj->map.total_area)
-	{
-		obj->map.pts[x].world.y = obj->map.pts[x].world.y * 0.9;
-		obj->map.pts[x].world.x = obj->map.pts[x].world.x * 0.9;
-		x++;
-	}
+	
+		obj->map.zoom--;
+		translate_center(obj ,find_center_x(obj), find_center_y(obj), find_center_z(obj));
 }
 
 void rotate_x(t_connection *obj, int cy, int cz, float radians)

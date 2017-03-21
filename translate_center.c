@@ -63,9 +63,9 @@ int translate_center(t_connection *obj, float mean_x, float mean_y, float mean_z
 	x = 0;
 	while(x < obj->map.total_area)
 	{
-		obj->map.pts[x].world.x = obj->map.pts[x].local.x - mean_x;
-		obj->map.pts[x].world.y =  obj->map.pts[x].local.y - mean_y;
-		obj->map.pts[x].world.z =  obj->map.pts[x].local.z - mean_z;
+		obj->map.pts[x].world.x = (obj->map.pts[x].local.x - mean_x) * obj->map.zoom;
+		obj->map.pts[x].world.y =  (obj->map.pts[x].local.y - mean_y) * obj->map.zoom;
+		obj->map.pts[x].world.z =  (obj->map.pts[x].local.z - mean_z) * obj->map.zoom;
 		x++;
 	}
 	return(0);

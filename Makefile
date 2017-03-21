@@ -9,4 +9,4 @@ SRCS = \
 		translate_center.c
 
 all:
-	gcc $(FLAGS) $(SRCS) $(MINILIB_X) $(LIBFT) $(FRAMEWORKS)
+	gcc $(FLAGS) $(SRCS) $(MINILIB_X) $(LIBFT) $(FRAMEWORKS) -o fdf
