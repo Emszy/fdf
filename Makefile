@@ -1,9 +1,9 @@
-FLAGS = -Wall -Werror -Wextra
-LIBFT = libft/libft.a
-FRAMEWORKS = -framework OpenGL -framework AppKit
+NAME = fdf
 MINILIB_X = minilibx_macos/libmlx.a
 
-SRCS = \
+FLAGS = -Wall -Wextra -Werror
+
+SRC =	\
 		fdf.c \
 		fdf_parsefile.c \
 		translate_center.c \
@@ -11,5 +11,25 @@ SRCS = \
 		lines.c \
 		misc.c
 
-all:
-	gcc $(FLAGS) $(SRCS) $(MINILIB_X) $(LIBFT) $(FRAMEWORKS) -o fdf
+
+OBJ = $(patsubst %.c,%.o,$(addprefix ./, $(SRC)))
+
+
+all: $(NAME)
+
+$(NAME): $(OBJ) fdf.h
+	make -C libft/
+	gcc $(FLAGS) -I /libft -c $(SRC)
+	gcc -o $(NAME) $(OBJ) -lm -L libft/ -lft $(MINILIB_X) -framework OpenGL -framework AppKit
+
+.PHONY: clean fclean
+
+clean:
+	make -C libft/ clean
+	/bin/rm -f $(OBJ)
+
+fclean: clean
+	make -C libft/ fclean
+	/bin/rm -f $(NAME)
+
+re: fclean all
