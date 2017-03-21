@@ -1,4 +1,3 @@
-NAME = ./fdf
 FLAGS = -Wall -Werror -Wextra
 LIBFT = libft/libft.a
 FRAMEWORKS = -framework OpenGL -framework AppKit
@@ -13,15 +12,4 @@ SRCS = \
 		misc.c
 
 all:
-	
-all: $(NAME)
-
-$(NAME):
 	gcc $(FLAGS) $(SRCS) $(MINILIB_X) $(LIBFT) $(FRAMEWORKS) -o fdf
-
-fclean: clean
-	/bin/rm -rf $(NAME) 
-
-re: fclean all
-
-.PHONY: clean
